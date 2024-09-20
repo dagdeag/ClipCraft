@@ -1,34 +1,54 @@
-import moviepy.editor as mv
-from math import floor
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 import random
 
-clip = mv.VideoFileClip("clip1.mp4")
+# Load the video file
+clip = VideoFileClip("clip1.mp4")
 
-NumClips = floor(clip.duration / 44)
+SaveEachSubClip = input('Do you want to save each subclip? (y/n): ')
+NumOfClipsDesired = int(input('How many clips do you want?: '))
 
+while True:
+    if SaveEachSubClip.lower() == 'y':
+        SaveSub = True
+        break
+    elif SaveEachSubClip.lower() == 'n':
+        SaveSub = False
+        break
+    else:
+        print('Only use y or n.')
+        SaveEachSubClip = input('Do you want to save each subclip? (y/n): ')
 
-# subclip1 = clip.subclip(1, NumClips)
-# subclip2 = clip.subclip(NumClips+1, 2*NumClips)
-# subclip3 = clip.subclip(2*NumClips + 1, 3*NumClips)
-# subclip4 = clip.subclip(3*NumClips + 1, 4*NumClips)
-# subclip5 = clip.subclip(4*NumClips + 1, 5*NumClips)
-# subclip6 = clip.subclip(5*NumClips + 1, 6*NumClips)
-clipsArray = [
-        clip.subclip(1, NumClips), 
-        clip.subclip(NumClips+1, 2*NumClips), 
-        clip.subclip(2*NumClips + 1, 3*NumClips), 
-        clip.subclip(3*NumClips + 1, 4*NumClips),   
-        clip.subclip(4*NumClips + 1, 5*NumClips),
-        clip.subclip(5*NumClips + 1, 6*NumClips),
-        clip.subclip(6*NumClips + 1, 7*NumClips)
-              ]
+# Set the duration for each subclip (6 seconds)
+clip_length = 6
+total_duration = clip.duration  # Get total duration of the video
 
-DeliveredClips = int(input('How many clips do you want?'))
+# Calculate how many 6-second clips we can create
+num_clips = int(total_duration // clip_length)
 
-for clps in enumerate(clipsArray):
-    # dodo dogshit fart
-    
-    
-    
+# Step 1: Create subclips
+subclips = []
+for i in range(num_clips):
+    start_time = i * clip_length
+    end_time = min((i + 1) * clip_length, total_duration)  # Ensure not to go past video length
+    subclip = clip.subclip(start_time, end_time)
+    if SaveSub is True:
+        subclip.write_videofile(f"subclip{i + 1}.mp4", codec="libx264", audio_codec="aac")
+    subclips.append(subclip)
 
-# print(NumClips)
+# Step 2: Shuffle the list
+random.shuffle(subclips)
+
+# Step 3: Group subclips into batches of 7 (which will be ~40 seconds)
+grouped_clips = [subclips[i:i + 7] for i in range(0, len(subclips), 7)]
+
+# Step 4: Concatenate subclips in each group and save them
+i = 0
+i = 0
+for idx, group in enumerate(grouped_clips):
+    if group:  # Make sure the group isn't empty
+        concatenated_clip = concatenate_videoclips(group)
+        concatenated_clip.write_videofile(f"output_40sec_clip_{idx + 1}.mp4", codec="libx264", audio_codec="aac")
+        i += 1
+        if i >= NumOfClipsDesired:
+            break  # Stop once you've made the desired number of clips
+print('DONE')
